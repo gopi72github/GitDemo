@@ -1,0 +1,361 @@
+aws
+Gandaraganda@1972
+
+github
+
+Gandaraganda@1972
+
+
+1) Create VPC(EDS) -10.1.0.0/16 - 65000 IP (Enable DNS Hostnames )
+2) Create Subnets for Web,App and DB servers(Enable Auto Assign IP)
+	Web Servers --->  10.1.1.0/24 (EDS-WebServers) -us-east-1a -251 IP's
+	App Servers --->  10.1.2.0/24 (EDS-AppServers) -us-east-1b
+      DB Servers ---->  10.1.3.0/24 (EDS-DBServers)  -us-east-1c
+3) Create Internet Gateway(IGW) and attach it to VPC (EDS=IGW)
+4) Create routing table and assign IGW and subnets to it. Don't use default routing table (TCS-PUBLIC-TABLE)
+5) Create Security Group(SG) and allow traffic.(TCS-ALLOW_ALL) --> Check/edit inbound rules(0.0.0.0/0)
+6) Create KeyPair.Public Key(.pem) ---> Key Pairs (
+7) Deploy a Instance(VM) and access using putty. (Give Private IP --Network interfaces -10.1.1.111) ...Internal use
+
+----------------------------------------------------------------------------
+10.1.1.0/24 ---> 10.1.1.0 to 10.1.1.255
+10.1.1.0 ----> Network ID
+10.1.1.255---> Broad Cast ID
+10.1.1.1,2,3 ---> used by AWS for gateways.
+
+Only the following can be used :
+10.1.1.4 to 10.1.1.254
+----------------------------------------------------------------------------
+
+
+
+Create VPC First Time :
+------------------------
+
+Click "Create VPC" button
+VPC Settings
+	"VPC and more" radio button selected by default
+	 Auto-generate check box is checked by default.Enter "DevopsB29" under that
+IPV4 CIDR Block
+	10.29.0.0/16	
+
+Number of Availability Zones (AZs) : 1
+Number of public subnetsInfo : 1
+Number of private subnetsInfo : 0
+
+Customize subnets CIDR blocks: 10.29.1.0/24
+
+
+Create a Server :
+-----------------
+Services ---> Compute ----> EC2
+Launch Instance
+	DevopsB29-ShellScripting
+Application and OS images(Amazon Machine Image)
+Quick start tab
+ ubuntu ---> Ubuntu Server 20.04 LTS
+
+Instance Type ---> t2.micro
+
+KeyPair ---> DevopsB29
+
+Network Settings ---> Edit ---> Auto-Assign Public IP ---> Enable
+
+Select Security Group ---> DevopsB29_Allow_All
+
+DevOps
+
+DevopsB29
+10.29.0.0/16
+10.29.1.0/24
+EC2 instance : DevopsB29-ShellScripting
+KeyPair DevopsB29
+
+
+==========================================================================================================================================================
+
+Steps to start a new EC2 instance after Termination :
+-----------------------------------------------------
+
+sudo su -
+Install thefollowing tools :
+	apt update && apt install -y unzip jq net-tools
+check installation bu using the following commands:
+	jq
+	unzip
+Search in google -- aws cli ubuntu 20.04
+	https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+Install or update the AWS CLI
+	
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+	unzip awscliv2.zip
+	sudo ./aws/install
+
+root@ip-10-29-1-78:~# aws --version
+aws-cli/2.8.1 Python/3.9.11 Linux/5.15.0-1019-aws exe/x86_64.ubuntu.20 prompt/off
+root@ip-10-29-1-78:~#
+
+=============================================================================================================================================================
+
+Install azure cli 
+-----------------
+
+Search in google -- Install azure cli
+	azure cli ubuntu
+
+https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt
+
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+root@ip-10-29-1-78:~# az version
+{
+  "azure-cli": "2.40.0",
+  "azure-cli-core": "2.40.0",
+  "azure-cli-telemetry": "1.0.8",
+  "extensions": {}
+}
+root@ip-10-29-1-78:~#
+
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+=================================================================================================================================================
+
+root@ip-10-29-1-78:~# aws ec2 describe-vpcs --region us-east-1
+
+Unable to locate credentials. You can configure credentials by running "aws configure".
+root@ip-10-29-1-78:~# aws configure
+AWS Access Key ID [None]: 
+AWS Secret Access Key [None]: 
+Default region name [None]: us-east1
+Default output format [None]: json
+
+root@ip-10-29-1-78:~# aws ec2 describe-vpcs --region us-east1
+
+Could not connect to the endpoint URL: "https://ec2.us-east1.amazonaws.com/"
+root@ip-10-29-1-78:~#  aws ec2 describe-vpcs
+
+
+root@ip-10-29-1-78:~# cd ~
+root@ip-10-29-1-78:~# ls -la
+total 46124
+drwx------  7 root root     4096 Oct  7 14:23 .
+drwxr-xr-x 19 root root     4096 Oct  7 13:32 ..
+drwxr-xr-x  2 root root     4096 Oct  7 14:23 .aws
+drwxr-xr-x  5 root root     4096 Oct  7 14:10 .azure
+-rw-r--r--  1 root root     3106 Dec  5  2019 .bashrc
+-rw-r--r--  1 root root      161 Dec  5  2019 .profile
+drwx------  2 root root     4096 Oct  7 13:32 .ssh
+drwxr-xr-x  3 root root     4096 Oct  5 18:31 aws
+-rw-r--r--  1 root root 47191970 Oct  7 13:57 awscliv2.zip
+drwx------  4 root root     4096 Oct  7 13:32 snap
+root@ip-10-29-1-78:~# cd .aws
+root@ip-10-29-1-78:~/.aws# ls -l
+total 8
+-rw------- 1 root root  42 Oct  7 14:23 config
+-rw------- 1 root root 116 Oct  7 14:23 credentials
+root@ip-10-29-1-78:~/.aws#
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+Commands :
+----------
+
+  aws ec2 describe-vpcs
+  aws ec2 describe-vpcs | jq ".Vpcs[]"
+  aws ec2 describe-vpcs | jq ".Vpcs[].VpcId"
+  aws ec2 describe-vpcs | jq ".Vpcs[].VpcId" -r
+
+root@ip-10-29-1-78:~#   USEAST1=$(aws ec2 describe-vpcs | jq ".Vpcs[].VpcId" -r)
+root@ip-10-29-1-78:~#   echo $USEAST1
+vpc-0966d5d509afe8124
+root@ip-10-29-1-78:~#
+
+update .bashrc
+
+===================================================================================================================================
+Commands Extra : 
+---------------
+aws credentials environment variables
+
+env
+$ export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+$ export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+$ export AWS_DEFAULT_REGION=us-west-2
+
+Update in .bashrc for permanant change
+
+
+direnv at folder level :
+-----------------------
+direnv github
+https://github.com/direnv/direnv/releases
+copy direnv.linux-amd64
+copy link address
+
+root@ip-10-29-1-78:~# cd /usr/local/bin
+root@ip-10-29-1-78:/usr/local/bin#
+wget https://github.com/direnv/direnv/releases/download/v2.32.1/direnv.linux-amd64
+mv direnv.linux-amd64 direnv
+chmod 777 direnv
+
+
+
+=====================================================================================================================================
+
+root@ip-10-29-1-78:/usr/local/bin# netstat -nltp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      734/sshd: /usr/sbin
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      408/systemd-resolve
+tcp6       0      0 :::22                   :::*                    LISTEN      734/sshd: /usr/sbin
+root@ip-10-29-1-78:/usr/local/bin#
+
+nginx is a webserver
+
+root@ip-10-29-1-78:/var/www/html# apt install -y nginx
+
+sudo apt install -y nginx
+sometimes need to run : sudo apt-get update
+service nginx start
+service nginx stop
+service nginx status
+
+
+root@ip-10-29-1-78:/usr/local/bin# cd /var/www/html
+root@ip-10-29-1-78:/var/www/html# ls
+index.nginx-debian.html
+root@ip-10-29-1-78:/var/www/html#
+
+root@ip-10-29-1-78:/var/www/html# netstat -nltp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      15429/nginx: master   ===> Listening on port 80
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      734/sshd: /usr/sbin
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      408/systemd-resolve
+tcp6       0      0 :::80                   :::*                    LISTEN      15429/nginx: master
+tcp6       0      0 :::22                   :::*                    LISTEN      734/sshd: /usr/sbin
+root@ip-10-29-1-78:/var/www/html#
+
+copy "ec2-35-169-117-179.compute-1.amazonaws.com" in browser
+
+
+root@ip-10-29-1-78:/var/www/html# service nginx stop
+root@ip-10-29-1-78:/var/www/html# netstat -nltp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      734/sshd: /usr/sbin
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      408/systemd-resolve
+tcp6       0      0 :::22                   :::*                    LISTEN      734/sshd: /usr/sbin
+root@ip-10-29-1-78:/var/www/html#  service nginx start
+root@ip-10-29-1-78:/var/www/html#  netstat -nltp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      15580/nginx: master
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      734/sshd: /usr/sbin
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      408/systemd-resolve
+tcp6       0      0 :::80                   :::*                    LISTEN      15580/nginx: master
+tcp6       0      0 :::22                   :::*                    LISTEN      734/sshd: /usr/sbin
+root@ip-10-29-1-78:/var/www/html#
+
+root@ip-10-29-1-78:/var/www/html# ps -ef | grep -i nginx | grep -v grep
+root       15580       1  0 16:22 ?        00:00:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+www-data   15581   15580  0 16:22 ?        00:00:00 nginx: worker process
+root@ip-10-29-1-78:/var/www/html#
+
+root@ip-10-29-1-78:/var/www/html# netstat -nltp | grep -i 15580
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      15580/nginx: master
+tcp6       0      0 :::80                   :::*                    LISTEN      15580/nginx: master
+root@ip-10-29-1-78:/var/www/html#
+
+root@ip-10-29-1-78:/var/www/html# service nginx status
+● nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+     Active: active (running) since Fri 2022-10-07 16:22:18 UTC; 6min ago
+       Docs: man:nginx(8)
+    Process: 15578 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+    Process: 15579 ExecStart=/usr/sbin/nginx -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+   Main PID: 15580 (nginx)
+      Tasks: 2 (limit: 1143)
+     Memory: 2.6M
+     CGroup: /system.slice/nginx.service
+             ├─15580 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+             └─15581 nginx: worker process
+
+Oct 07 16:22:18 ip-10-29-1-78 systemd[1]: Starting A high performance web server and a reverse proxy server...
+Oct 07 16:22:18 ip-10-29-1-78 systemd[1]: Started A high performance web server and a reverse proxy server.
+root@ip-10-29-1-78:/var/www/html#
+
+root@ip-10-29-1-78:/var/www/html# service nginx status | grep -i running
+     Active: active (running) since Fri 2022-10-07 16:22:18 UTC; 7min ago
+root@ip-10-29-1-78:/var/www/html# service nginx stop
+root@ip-10-29-1-78:/var/www/html# service nginx status | grep -i running
+root@ip-10-29-1-78:/var/www/html#
+
+#!/bin/bash
+NGINX_STATUS=$(service nginx status | grep -i running)
+
+if [ $? eq 0 ]
+then
+echo"NGINX server is running.No Restart required'
+else
+service nginx start
+fi
+
+
+root@ip-10-29-1-78:~# apt install mysql-server
+root@ip-10-29-1-78:~# service mysql status
+● mysql.service - MySQL Community Server
+     Loaded: loaded (/lib/systemd/system/mysql.service; enabled; vendor preset: enabled)
+     Active: active (running) since Fri 2022-10-07 17:44:18 UTC; 48s ago
+   Main PID: 16561 (mysqld)
+     Status: "Server is operational"
+      Tasks: 39 (limit: 1143)
+     Memory: 353.2M
+     CGroup: /system.slice/mysql.service
+             └─16561 /usr/sbin/mysqld
+
+Oct 07 17:44:17 ip-10-29-1-78 systemd[1]: Starting MySQL Community Server...
+Oct 07 17:44:18 ip-10-29-1-78 systemd[1]: Started MySQL Community Server.
+root@ip-10-29-1-78:~#
+
+root@ip-10-29-1-78:~# ./CheckServices.sh
+NGINX server is running.No Restart required
+MYSQL server is running.No Restart required
+root@ip-10-29-1-78:~# service nginx stop && service mysql stop
+root@ip-10-29-1-78:~# ./CheckServices.sh
+     Active: active (running) since Fri 2022-10-07 17:53:51 UTC; 15ms ago
+     Active: active (running) since Fri 2022-10-07 17:53:53 UTC; 15ms ago
+root@ip-10-29-1-78:~#
+
+
+root@ip-10-29-1-78:~# ps -ef |grep -i nginx | grep -v grep
+root       17416       1  0 18:02 ?        00:00:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+www-data   17421   17416  0 18:02 ?        00:00:00 nginx: worker process
+root@ip-10-29-1-78:~#  ps -ef |grep -i mysql| grep -v grep
+mysql      17445       1  1 18:02 ?        00:00:01 /usr/sbin/mysqld
+root@ip-10-29-1-78:~#  ps -ef |grep -i 'nginx: master' | grep -v grep
+root       17416       1  0 18:02 ?        00:00:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+root@ip-10-29-1-78:~# netstat -ntlp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      17416/nginx: master
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      734/sshd: /usr/sbin
+tcp        0      0 127.0.0.1:3306          0.0.0.0:*               LISTEN      17445/mysqld
+tcp        0      0 127.0.0.1:33060         0.0.0.0:*               LISTEN      17445/mysqld
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      408/systemd-resolve
+tcp6       0      0 :::80                   :::*                    LISTEN      17416/nginx: master
+tcp6       0      0 :::22                   :::*                    LISTEN      734/sshd: /usr/sbin
+root@ip-10-29-1-78:~#
+
+
+
+
+#!/bin/bash
+echo "Welcome To Devops Training Batch B29"
+root@ip-10-29-1-242:~# ls /bin | grep -i bas*
+base32
+base64
+basename
+bash
+bashbug
